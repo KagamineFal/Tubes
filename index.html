@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Cover Classification</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="Picture/Rimuru.jpg" type="image/png">
+</head>
+<body>
+<header>
+    <div style="display: flex; align-items: center; padding: 10px; background-color: #670000; color: white;">
+        <div style="margin-right: 10px;">
+            <div style="width: 50px; height: 50px; border-radius: 50%; background-color: white; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="playAudio()">
+                <img src="Picture/Rimuru.jpg" alt="Logo" style="width: 80px; height: 80px; border-radius: 50%;">
+            </div>
+        </div>
+        <h1 style="margin: 0;">Image Classification</h1>
+    </div>
+</header>
+<div class="container">
+    <div class="upload-area" id="upload-area">
+        <p>Drag & Drop an Image or Click to Upload</p>
+        <input type="file" id="file-input" accept="image/*" onchange="previewImage(event)" style="display: none;">
+    </div>
+    <img id="image-preview" class="preview" src="#" alt="" style="display: none;">
+    <div id="result" class="result">Prediction result will appear here.</div>
+    <button class="button" onclick="predictImage()">Predict</button>
+</div>
+
+<audio id="audio-player" src="assets/awo-cat.mp3"></audio>
+
+<script>
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (event) => {
+        event.preventDefault();
+        uploadArea.classList.remove('dragover');
+
+        const file = event.dataTransfer.files[0];
+        if (file) {
+            previewImage({ target: { files: [file] } });
+        }
+    });
+
+    function previewImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('image-preview');
+                preview.src = e.target.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function predictImage() {
+        const fileInput = document.getElementById('file-input');
+        const result = document.getElementById('result');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            result.textContent = 'Please upload an image!';
+            return;
+        }
+
+        result.textContent = 'Predicting...';
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/predict', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                result.textContent = `Prediction: ${data.genre}`;
+            } else {
+                result.textContent = 'Prediction failed. Please try again.';
+            }
+        } catch (error) {
+            result.textContent = 'An error occurred. Please try again.';
+        }
+    }
+
+    function playAudio() {
+        const audio = document.getElementById('audio-player');
+        audio.play();
+    }
+</script>
+</body>
+</html>
